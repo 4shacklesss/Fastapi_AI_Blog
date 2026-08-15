@@ -6,6 +6,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     username: str = Field(min_length=1,max_length=50)
     email: EmailStr = Field(max_length=120)
+
     
 class UserCreate(UserBase):
     pass
@@ -25,6 +26,10 @@ class PostBase(BaseModel):
     
 class PostCreate(PostBase):  #inherited from Base
     user_id: int  #temporary
+
+class PostUpdate(BaseModel):  #some time u want just partially update, patch
+    title: str | None = Field(default=None, min_length=1, max_length=100)
+    content: str | None = Field(default=None, min_length=1)
 
 class PostResponse(PostBase):
     model_config = ConfigDict(from_attributes=True)
