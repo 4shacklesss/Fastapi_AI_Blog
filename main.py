@@ -60,7 +60,7 @@ app.include_router(posts.router, prefix="/api/posts", tags=["posts"])
 @app.get("/", include_in_schema=False, name="home")
 @app.get("/posts", include_in_schema=False, name="posts")
 async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
-    result = await db.execute(select(models.Post).options(selectinload(models.Post.author)))
+    result = await db.execute(select(models.Post).options(selectinload(models.Post.author)).order_by(models.Post.date_posted.desc()))#returning a list of post, and we sort it from latest to oldest
     posts = result.scalars().all()
     return templates.TemplateResponse(
         request,
@@ -71,7 +71,7 @@ async def home(request: Request, db: Annotated[AsyncSession, Depends(get_db)]):
 ## post_page
 @app.get("/posts/{post_id}", include_in_schema=False)
 async def post_page(request: Request, post_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
-    result = db.execute(
+    result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
         .where(models.Post.id == post_id))
@@ -109,7 +109,8 @@ async def user_posts_page(
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
-        .where(models.Post.user_id == user_id),
+        .where(models.Post.user_id == user_id)
+        .order_by(models.Post.date_posted.desc()),
     )
     posts = result.scalars().all()
     return templates.TemplateResponse(

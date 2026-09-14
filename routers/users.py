@@ -56,7 +56,7 @@ async def get_user(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
 
-@router.get("/{user_id}/posts", response_model=list[PostResponse])
+@router.get("/{user_id}/posts", response_model=list[PostResponse]) # returning a list of stuff, so need sorted
 async def get_user_posts(user_id: int, db: Annotated[AsyncSession, Depends(get_db)]):
     result = await db.execute(select(models.User).where(models.User.id == user_id))
     user = result.scalars().first()
@@ -68,7 +68,8 @@ async def get_user_posts(user_id: int, db: Annotated[AsyncSession, Depends(get_d
     result = await db.execute(
         select(models.Post)
         .options(selectinload(models.Post.author))
-        .where(models.Post.user_id == user_id),
+        .where(models.Post.user_id == user_id)
+        .order_by(models.Post.date_posted.desc()),
     )
     posts = result.scalars().all()
     return posts
