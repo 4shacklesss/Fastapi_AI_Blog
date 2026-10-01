@@ -92,15 +92,25 @@
             </div>
             <!-- Navbar Right Side -->
             <div class="navbar-nav">
-              ## New Post Modal for layout.html
-              <!-- NOTE: Once auth is set up, this button will only be visible when logged in -->
-              <button class="btn btn-outline-light mb-2 mb-md-0 me-md-2"
-                  type="button"
-                  data-bs-toggle="modal"
-                  data-bs-target="#createPostModal">New Post</button>
-              <!-- NOTE: Once auth is set up, this button will only be visible when logged in -->
+              
+<!-- Shown when logged in (hidden by default, shown via JS) -->
+<div id="loggedInNav" class="d-none">
+    <button class="btn btn-outline-light mb-2 mb-md-0 me-md-2"
+            type="button"
+            data-bs-toggle="modal"
+            data-bs-target="#createPostModal">New Post</button>
+    <a class="btn btn-light mb-2 mb-md-0 me-md-3"
+       href="{{ url_for("account_page") }}"
+       id="accountBtn">Account</a>
+</div>
 
-              <a class="btn btn-outline-light mb-2 mb-md-0 me-md-2" href="#">Login</a>
+<!-- Shown when logged out -->
+<div id="loggedOutNav">
+<a class="btn btn-outline-light mb-2 mb-md-0 me-md-2"
+    href="{{ url_for("login_page") }}">Login</a>
+<a class="btn btn-light mb-2 mb-md-0 me-md-3"
+    href="{{ url_for("register_page") }}">Register</a>
+</div>
               <a class="btn btn-light mb-2 mb-md-0 me-md-3" href="#">Register</a>  <!--left for future-->
               <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle"
@@ -281,14 +291,41 @@
       setTheme(localStorage.getItem('theme') || 'auto');
     </script>
 
-    ## Create Post JavaScript
-<!-- Create Post Form Handler -->
+
+    <!-- Auth State Management -->
+<script type="module">
+    import { getCurrentUser } from '/static/js/auth.js';
+
+    async function updateAuthUI() {
+        const user = await getCurrentUser();
+        const loggedInNav = document.getElementById('loggedInNav');
+        const loggedOutNav = document.getElementById('loggedOutNav');
+        const accountBtn = document.getElementById('accountBtn');
+
+        if (user) {
+            loggedInNav.classList.remove('d-none');
+            loggedInNav.classList.add('d-flex');
+            loggedOutNav.classList.add('d-none');
+            accountBtn.textContent = user.username;
+        } else {
+            loggedInNav.classList.add('d-none');
+            loggedInNav.classList.remove('d-flex');
+            loggedOutNav.classList.remove('d-none');
+            accountBtn.textContent = 'Account';
+        }
+    }
+
+    updateAuthUI();
+</script>
+    <!-- ## Create Post JavaScript
+ Create Post Form Handler -->
 <script type="module">
     import {
     getErrorMessage,
     hideModal,
     showModal,
     } from "/static/js/utils.js";
+    import { getToken } from '/static/js/auth.js';
 
     const createForm = document.getElementById("createPostForm");
 
@@ -296,12 +333,17 @@
     // Stop default form submission - we'll handle it with JavaScript
     event.preventDefault();
 
+    const token = getToken();
+    if (!token) {
+        window.location.href = '/login';
+        return;
+    }
+
     // Gather form values into a plain object {title: "...", content: "..."}
     const formData = new FormData(createForm);
     const postData = Object.fromEntries(formData.entries());
 
-    // TEMPORARY - hardcoded until authorization (Tutorial 11)
-    postData.user_id = 1;
+    
 
     try {
         // POST to our API as JSON
@@ -309,9 +351,16 @@
         method: "POST",
         headers: {
             "Content-Type": "application/json",
+            'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(postData),
         });
+
+        if (response.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
 
         if (response.ok) {
         const data = await response.json();
