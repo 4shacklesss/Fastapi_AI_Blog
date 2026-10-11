@@ -8,7 +8,7 @@ engine = create_async_engine(#connection to database
     connect_args={"check_same_thread": False},
 )
 
-AyncSessionLocal = async_sessionmaker(
+AsyncSessionLocal = async_sessionmaker(
     engine,
     class_ = AsyncSession,
     expire_on_commit=False,
@@ -20,7 +20,7 @@ class Base(DeclarativeBase):
 
 
 async def get_db():#like open file
-    async with AyncSessionLocal() as session:
+    async with AsyncSessionLocal() as session:
         yield session
 
 
