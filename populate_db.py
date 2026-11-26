@@ -1,4 +1,5 @@
 import asyncio
+import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
@@ -234,6 +235,12 @@ POST_44 = {
 
 
 async def clear_existing_data() -> None:
+    # Clear database tables (order respects foreign keys)
+    async with AsyncSessionLocal() as db:
+        await db.execute(delete(models.Post))
+        await db.execute(delete(models.User))
+        await db.commit()
+
     # Delete profile pictures from local storage
     if PROFILE_PICS_DIR.exists():
         for file in PROFILE_PICS_DIR.iterdir():
@@ -241,11 +248,6 @@ async def clear_existing_data() -> None:
                 file.unlink()
         print(f"Deleted profile pictures from {PROFILE_PICS_DIR}")
 
-    # Clear database tables (order respects foreign keys)
-    async with AsyncSessionLocal() as db:
-        await db.execute(delete(models.Post))
-        await db.execute(delete(models.User))
-        await db.commit()
     print("Cleared existing data")
 
 
@@ -288,7 +290,6 @@ async def populate() -> None:
         transport=transport,
         base_url="http://localhost",
     ) as client:
-        # Clear existing data (local images first, then database)
         await clear_existing_data()
 
         users: list[dict] = []
@@ -380,4 +381,5 @@ async def populate() -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(populate())
+    loop_factory = asyncio.SelectorEventLoop if sys.platform == "win32" else None
+    asyncio.run(populate(), loop_factory=loop_factory)

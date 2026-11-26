@@ -55,7 +55,8 @@ class Post(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
     )
-
+    likes: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    
     author: Mapped[User] = relationship(back_populates="posts")
     
     ## PasswordResetToken model, use datebase for single used action, so we can delelte them at anytime, and we don't want jwt for that cus it can't be invalidated before expired

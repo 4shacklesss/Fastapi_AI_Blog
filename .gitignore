@@ -12,4 +12,6 @@ wheels/
  
  
  
- .env
+.env
+/.codex-attachments/
+/blog.db

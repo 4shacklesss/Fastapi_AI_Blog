@@ -25,7 +25,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from sqlalchemy.orm import selectinload
 
-from database import Base, engine, get_db
+from database import engine, get_db
 
 from contextlib import asynccontextmanager
 
@@ -37,9 +37,6 @@ import models
 #Base.metadata.create_all(bind=engine)
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    # start up
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
     yield
     #shut down
     await engine.dispose()
